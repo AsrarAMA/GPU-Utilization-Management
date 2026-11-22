@@ -7,13 +7,13 @@ public class AccessRequest implements Serializable{
    } //status of request; decided by admin
    private String studentID, email,name,phone,pass;
    private Status status; //class attributes
-   public AccessRequest(String studentID, String name,String email, String phone, String pass, Status status){
+   public AccessRequest(String studentID, String name,String email, String phone, String pass){
     this.studentID=studentID;
     this.name=name;
     this.email=email;
     this.phone=phone;
     this.pass=pass;
-    this.status=status; //full constructor
+    this.status=Status.PENDING; //full constructor
    }
    //getter methods since attr are private
    public String getStudentId(){
