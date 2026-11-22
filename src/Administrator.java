@@ -10,10 +10,11 @@ public class Administrator extends User {
     public String getRole() {return "Administrator";}
 
     public Student approveRequest(AccessRequest request) {
+       if (request.getStatus()!=AccessRequest.Status.PENDING){
+           throw new IllegalStateException("Request already processed");}
+       request.approve();
 
-        request.approve();
-
-        Student student = new Student(
+       Student student = new Student(
         		request.getStudentId(),
         		request.getName(),
         		request.getEmail(),
