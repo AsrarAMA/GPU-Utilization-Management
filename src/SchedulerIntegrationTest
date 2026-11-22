@@ -1,0 +1,237 @@
+import java.time.LocalDateTime;
+
+public class SchedulerIntegrationTest {
+
+	public static void main(String[] args) {
+
+		Main.AppState data=new Main.AppState();
+
+		data.register(
+			"1000123", "Demo Student",
+			"student@example.com", "0500000001", "Demo123!"
+		);
+
+		Student student=data.administrator.approveRequest(
+			data.requests.get(0)
+		);
+
+		data.students.add(student);
+
+		//100 initial minutes plus 100 extra
+		data.administrator.grantMinutes(student, 100);
+
+		TimeAllowance balance=student.getAllowance();
+
+		LocalDateTime time=
+			LocalDateTime.of(2026, 11, 17, 10, 0);
+
+		data.initializeSimulation(time);
+		Scheduler s=data.scheduler;
+
+		s.submitJob(
+			"1000123", "Job1", "Python", "Test", TaskSize.SMALL
+		);
+
+		s.submitJob(
+			"1000123", "Job2", "Python", "Test", TaskSize.MEDIUM
+		);
+
+		s.submitJob(
+			"1000123", "Job3", "Python", "Test", TaskSize.LARGE
+		);
+
+		s.submitJob(
+			"1000123", "Job4", "Python", "Test", TaskSize.VERY_LARGE
+		);
+
+		s.submitJob(
+			"1000123", "Job5", "Python", "Test", TaskSize.SMALL
+		);
+
+		s.submitJob(
+			"1000123", "Job6", "Python", "Test", TaskSize.SMALL
+		);
+
+		check(
+			s.countJobs(JobStatus.RUNNING)==4
+			&& s.getWaitingJobs().size()==2,
+			"Four running and two waiting"
+		);
+
+		check(
+			balance.getReserved()==120
+			&& balance.getUsed()==0
+			&& balance.getAvailable()==80,
+			"Real student allowance reserved correctly"
+		);
+
+		check(
+			time.plusMinutes(5).equals(s.getPredictedStart(5))
+			&& s.getPredictedWaitMinutes(6)==10,
+			"Waiting predictions correct"
+		);
+
+		check(
+			s.findJobByID(5).getStartTime()==null,
+			"Predictions do not start queued jobs"
+		);
+
+		for (int i=1; i<=5; i++)
+			s.advanceMinute();
+
+		check(
+			s.findJobByID(1).getStatus()==JobStatus.COMPLETED
+			&& s.findGPUForJob(5).getGpuID()==1,
+			"Completion starts next job on GPU 1"
+		);
+
+		check(
+			balance.getUsed()==5
+			&& balance.getReserved()==115,
+			"Completion updates Member 1's real allowance"
+		);
+
+		for (int i=1; i<=3; i++)
+			s.advanceMinute();
+
+		//cancel queued work before freeing a running GPU
+		s.cancelJob(
+			6, "1000123", "Queued cancellation test"
+		);
+
+		check(
+			balance.getUsed()==5
+			&& balance.getReserved()==110,
+			"Queued cancellation costs zero"
+		);
+
+		s.cancelJob(
+			3, "1000123", "Running cancellation test"
+		);
+
+		check(
+			balance.getUsed()==13
+			&& balance.getReserved()==80
+			&& balance.getAvailable()==107,
+			"Running cancellation charges eight minutes"
+		);
+
+		//the dashboard uses this same synchronization method
+		data.clock.syncT(s.getCurrentTime());
+
+		check(
+			time.plusMinutes(8).equals(data.clock.getT())
+			&& data.clock.getMins()==8,
+			"Member 3's clock synchronizes with scheduler"
+		);
+
+		long busy=0;
+
+		for (GPU gpu:s.getGPUs())
+			busy+=gpu.getBusyMinutes();
+
+		check(
+			busy==32,
+			"Busy minutes include cancelled runtime"
+		);
+
+		check(
+			100.0*busy/(4*data.clock.getMins())==100.0,
+			"Utilization calculation is correct"
+		);
+
+		try {
+			data.initializeSimulation(time.plusDays(1));
+
+			throw new AssertionError(
+				"Simulation was initialized twice."
+			);
+		}
+		catch (IllegalStateException e) {
+			System.out.println(
+				"PASS: Simulation cannot be initialized twice"
+			);
+		}
+
+		try {
+			s.submitJob(
+				"9999999", "Unknown",
+				"Java", "Test", TaskSize.SMALL
+			);
+
+			throw new AssertionError(
+				"Unknown student submitted a job."
+			);
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println("PASS: Unknown student rejected");
+		}
+
+		//check an exact balance using a separate account
+		Main.AppState exact=new Main.AppState();
+
+		exact.register(
+			"1000789", "Exact Student",
+			"exact@example.com", "0500000003", "Demo123!"
+		);
+
+		Student other=exact.administrator.approveRequest(
+			exact.requests.get(0)
+		);
+
+		exact.students.add(other);
+		exact.initializeSimulation(time);
+
+		exact.scheduler.submitJob(
+			"1000789", "A", "Java", "Test", TaskSize.VERY_LARGE
+		);
+
+		exact.scheduler.submitJob(
+			"1000789", "B", "Java", "Test", TaskSize.LARGE
+		);
+
+		exact.scheduler.submitJob(
+			"1000789", "C", "Java", "Test", TaskSize.SMALL
+		);
+
+		exact.scheduler.submitJob(
+			"1000789", "D", "Java", "Test", TaskSize.SMALL
+		);
+
+		check(
+			other.getAllowance().getAvailable()==0,
+			"Exact 100-minute balance accepted"
+		);
+
+		try {
+			exact.scheduler.submitJob(
+				"1000789", "Excess",
+				"Java", "Test", TaskSize.SMALL
+			);
+
+			throw new AssertionError("Over-limit job accepted.");
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println(
+				"PASS: Over-limit job rejected by real allowance"
+			);
+		}
+
+		check(
+			exact.scheduler.getJobs().size()==4
+			&& other.getAllowance().getReserved()==100,
+			"Rejected job changes no records or reservations"
+		);
+
+		System.out.println(
+			"SchedulerIntegrationTest finished successfully."
+		);
+	}
+
+	private static void check(boolean condition, String message) {
+		if (!condition)
+			throw new AssertionError(message);
+
+		System.out.println("PASS: "+message);
+	}
+}
