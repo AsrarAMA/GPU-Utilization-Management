@@ -1,3 +1,4 @@
+package gpu;
 import java.util.*;
 public class Student extends User {
 	private String email, phone;
