@@ -1,4 +1,4 @@
-public class TimeAllowance {
+public class TimeAllowance implements Serializable {
 	private int allocated, used, reserved;
 	
 	public TimeAllowance(int allocated) {
