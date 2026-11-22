@@ -1,3 +1,5 @@
+package gpu;
+import java.io.Serializable;
 public abstract class User implements Serializable {
 	private String id, name, password;
 	
