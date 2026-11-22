@@ -1,3 +1,4 @@
+package gpu;
 import java.util.*;
 
 public class Administrator extends User {
