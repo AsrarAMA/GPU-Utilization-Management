@@ -28,6 +28,8 @@ public class AccessRequest implements Serializable{
    public String getPhone(){
     return phone;
    }
+   public String getPassword(){
+      return pass;}
    public Status getStatus(){
     return status;
    }
