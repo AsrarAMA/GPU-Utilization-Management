@@ -1,3 +1,5 @@
+package gpu;
+import java.io.Serializable;
 public class TimeAllowance implements Serializable {
 	private int allocated, used, reserved;
 	
