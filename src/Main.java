@@ -46,7 +46,7 @@ public class Main{ //class within a class
         }
         //method responsible for student registration to use GPUs and approved by admins
         public void register(String id, String studname, String mail, String phoneno,String pass){
-            if(studname==null||id==null||mail==null||phoneno==null||pass==null){//ensures each field was filled
+            if(studname==null||studname.isBlank()||id==null||id.isBlank()|| mail==null||mail.isBlank()||phoneno==null||phoneno.isBlank()||pass==null||pass.isBlank()){//ensures each field was filled
               throw new IllegalArgumentException("Please fill all requirements:");}
             if(id.equals("admin")||findStudent(id)!=null){
                 throw new IllegalArgumentException("ID already taken");
