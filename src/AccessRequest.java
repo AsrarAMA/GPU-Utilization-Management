@@ -31,6 +31,6 @@ public class AccessRequest implements Serializable{
    public Status getStatus(){
     return status;
    }
-   public void approve(){ status=Staus.APPROVED;} //REQUEST GOT APPROVED BY ADMIN
+   public void approve(){ status=Status.APPROVED;} //REQUEST GOT APPROVED BY ADMIN
    public void reject(){status= Status.REJECTED;} //REJECTED BY ADMIN
 }
