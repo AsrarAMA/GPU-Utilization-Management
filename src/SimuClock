@@ -1,4 +1,4 @@
-
+package gpu;
 import java.io.*; //for LocalDateTime to store both date and time
 import java.time.*; //class for simulating an displaying date and time that advances with each minute
 //no code needed from members
@@ -270,7 +270,7 @@ class Dashboard extends JFrame implements ActionListener{
 		 balance.setText(b.isEmpty()?"No student":b);
 		 if (isadmin){
 			setClock.setEnabled(s1==null);
-			dataselection.setEnabled(s1==null);
+			dateselection.setEnabled(s1==null);
 			advButton.setEnabled(s1!=null);
 		 }
 		 else{
