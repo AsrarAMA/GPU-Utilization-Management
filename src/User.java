@@ -1,7 +1,7 @@
 package gpu;
 import java.io.Serializable;
 public abstract class User implements Serializable {
-	private String id, name, password;
+	private String id, name, password;     // Private attributes shared by all users
 	
 	public User() {}
 	
@@ -18,8 +18,10 @@ public abstract class User implements Serializable {
 	
 	public void setPassword(String password) {this.password= password;}
 	
-	public boolean checkPassword(String password) {return this.password.equals(password);}
+	public boolean checkPassword(String password) {return this.password.equals(password);}    
+	// Checks whether the entered password matches
+
 	
-	public abstract String getRole();
+	public abstract String getRole();     // Abstract method: subclasses must implement this method
 	
 }
